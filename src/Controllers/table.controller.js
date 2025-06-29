@@ -5,7 +5,7 @@ import { ArchivedOrderModel } from "../models/ArchivedOrders.js";
 import { OrderModel } from "../models/Order.js";
 import { StatusCodes } from 'http-status-codes'
 import SessionController from "../Middewares/SessionController.js";
-import { TABLE_STATUS } from "../utils/Enums.js";
+import { TABLE_STATUS } from "../utils/enums.js";
 import { TableSessionModel } from "../models/TableSession.js";
 
 const newTableController = async (req, res) => {
