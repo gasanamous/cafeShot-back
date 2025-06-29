@@ -1,0 +1,42 @@
+paths:
+  /session/refresh:
+    post:
+      tags:
+        - Session
+      summary: Refresh expired access token
+      description: |
+        Regenerates a new access token using the payload of an expired token.
+        The token must be provided in the Authorization header as a Bearer token.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: New token generated successfully
+          content:
+            application/json:
+              example:
+                NEW_TOKEN: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "400":
+          description: Bad Request (Token not exist in request header )
+          content:
+            application/json:
+              example:
+                errMsg: Authentication token is missing
+        "401":
+          description: Unauthorized - Invalid token
+          content:
+            application/json:
+              example:
+                errMsg: Invalid or expired token
+        "403":
+          description: Forbidden - Token not expired
+          content:
+            application/json:
+              example:
+                errMsg: Token is not expired
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                errMsg: Internal Server Error

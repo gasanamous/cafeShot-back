@@ -1,0 +1,519 @@
+paths:
+  /manager/login:
+    post:
+      tags:
+        - Manager
+      summary: Manager login
+      description: Manager can login using email or account ID along with password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              loginId: "manager@example.com"
+              accountPassword: "password123"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              example:
+                ACCESS_TOKEN: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                role: "manager"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              example:
+                errMsg: Please enter email/ID and password
+        "401":
+          description: Incorrent login ID or password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Please enter correct login ID and password
+
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                errMsg: Something went wrong
+
+  /manager/new:
+    post:
+      tags:
+        - Manager
+      summary: Add a new manager
+      description: Creates a new manager after validating required fields, uniqueness of email/phone number, and schema constraints.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountEmail:
+                  type: string
+                  format: email
+                  example: manager@example.com
+                accountPassword:
+                  type: string
+                  format: password
+                  example: StrongPass123!
+                firstName:
+                  type: string
+                  example: John
+                lastName:
+                  type: string
+                  example: Doe
+                phoneNumber:
+                  type: string
+                  example: "0598765432"
+                role:
+                  type: string
+                  enum: [Admin, Waiter]
+                  example: Waiter
+                workingHours:
+                  type: string
+                  enum: ["Morning shift", "Evening shift", "Full time"]
+                  example: Full time
+      responses:
+        "201":
+          description: Manager created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  newManager:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                        example: j.doe5432
+                      firstName:
+                        type: string
+                        example: John
+                      lastName:
+                        type: string
+                        example: Doe
+                      accountEmail:
+                        type: string
+                        example: manager@example.com
+                      phoneNumber:
+                        type: string
+                        example: "0598765432"
+                      role:
+                        type: string
+                        example: Waiter
+                      status:
+                        type: string
+                        example: Active
+                      workingHours:
+                        type: string
+                        example: Full time
+                      createdAt:
+                        type: string
+                        example: "20 May 2025 - 10:32 AM"
+                      updatedAt:
+                        type: string
+                        example: null
+        "400":
+          description: Missing data in request body
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Please enter the data of the new manager
+
+        "401":
+          description: Unauthorized - token expired or access denied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Invalid token
+                  closeSession:
+                    type: boolean
+                    example: true
+        "403":
+          description: Waiter cannot access to this API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Access Denied. You are not allowed to do this process
+
+        "409":
+          description: Manager already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: This manager email or phone number already exists
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Please enter a correct data
+                  errorFields:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    example:
+                      accountPassword: Password must be at least 8 characters and contain letters and symbols
+
+  /manager/update/{managerId}:
+    patch:
+      tags:
+        - Manager
+      summary: Update manager details
+      description: |
+        Updates the details of an existing manager. 
+        Note: The account password cannot be changed through this endpoint.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: managerId
+          required: true
+          schema:
+            type: string
+          description: The ID of the manager to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              firstName: "UpdatedFirst"
+              lastName: "UpdatedLast"
+              phoneNumber: "0599999999"
+              role: "Admin"
+              workingHours: "Morning shift"
+      responses:
+        "200":
+          description: Update result
+          content:
+            application/json:
+              examples:
+                success:
+                  value:
+                    message: Manager updated successfully
+                noChanges:
+                  value:
+                    message: No changes were made to the manager data
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              example:
+                errMsg: Please enter valid data 
+        "403":
+          description: Waiter cannot access to this API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Access Denied. You are not allowed to do this process
+                
+        "401":
+          description: Unauthorized - token expired or access denied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Invalid token
+                  closeSession:
+                    type: boolean
+                    example: true
+
+        "404":
+          description: Manager not found
+          content:
+            application/json:
+              example:
+                errMsg: Please provide a valid manager ID
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              example:
+                errMsg: Invalid fields provided
+                errorFields:
+                  phoneNumber: Invalid phone number format
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                errMsg: Something went wrong
+    
+  /manager/restrict/{managerId}:
+    patch:
+      tags:
+        - Manager
+      summary: Restrict or deactivate a manager
+      description: |
+        Allows an authenticated manager (Admin) to restrict or deactivate another manager's account (e.g., prevent login or activity).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: managerId
+          required: true
+          schema:
+            type: string
+          description: The ID of the manager to restrict
+      responses:
+        "200":
+          description: Manager restricted successfully
+          content:
+            application/json:
+              example:
+                message: Manager has been restricted successfully
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              example:
+                errMsg: Please provide a valid manager ID
+        "401":
+          description: Unauthorized - token expired or access denied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Invalid token
+                  closeSession:
+                    type: boolean
+                    example: true
+        "403":
+          description: Waiter cannot access to this API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Access Denied. You are not allowed to do this process
+        "404":
+          description: Manager not found
+          content:
+            application/json:
+              example:
+                errMsg: Manager with the given ID was not found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                errMsg: Something went wrong
+  
+  /manager/delete/{managerId}:
+    delete:
+      tags:
+        - Manager
+      summary: Delete a manager by ID
+      description: |
+        Deletes a manager account identified by the provided `managerId`. 
+        Requires a valid manager JWT token with appropriate permissions.
+      parameters:
+        - in: path
+          name: managerId
+          required: true
+          schema:
+            type: string
+          description: The ID of the manager to delete
+      security:
+        - bearerAuth: []   # يوضح أن التوثيق يتم عبر توكن Bearer JWT
+      responses:
+        "200":
+          description: Manager deleted successfully
+          content:
+            application/json:
+              example:
+                message: Manager deleted successfully
+        "400":
+          description: Bad request, missing or invalid managerId
+          content:
+            application/json:
+              example:
+                errMsg: Please provide a manager ID to delete
+        "401":
+          description: Unauthorized - token expired or access denied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Invalid token
+                  closeSession:
+                    type: boolean
+                    example: true
+        "403":
+          description: Waiter cannot access to this API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Access Denied. You are not allowed to do this process
+        "404":
+          description: Manager not found with given ID
+          content:
+            application/json:
+              example:
+                errMsg: This manager does not exist
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                errMsg: Something went wrong
+
+  /manager/allmanagers:
+    get:
+      tags:
+        - Manager
+      summary: Get all managers
+      description: |
+        Retrieves a list of all managers in the system, excluding sensitive fields such as passwords and versioning info.
+        Requires a valid JWT bearer token for a manager.
+        The token is validated, and access is restricted by role-based permissions.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved list of managers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  managers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        managerId:
+                          type: string
+                          example: "j.doe7890"
+                        firstName:
+                          type: string
+                          example: "John"
+                        lastName:
+                          type: string
+                          example: "Doe"
+                        accountEmail:
+                          type: string
+                          example: "john.doe@example.com"
+                        status:
+                          type: string
+                          enum: ["Active", "Restricted"]
+                          example: "Active"
+                        phoneNumber:
+                          type: string
+                          example: "1234567890"
+                        role:
+                          type: string
+                          enum: ["Admin", "Waiter"]
+                          example: "Admin"
+                        workingHours:
+                          type: string
+                          enum: ["Morning shift", "Evening shift", "Full time"]
+                          example: "Full time"
+                        createdAt:
+                          type: string
+                          example: "24 May 2025 - 10:30 AM"
+                        updatedAt:
+                          type: string
+                          nullable: true
+                          example: "25 May 2025 - 02:00 PM"
+              example:
+                managers:
+                  - managerId: "j.doe7890"
+                    firstName: "John"
+                    lastName: "Doe"
+                    accountEmail: "john.doe@example.com"
+                    status: "Active"
+                    phoneNumber: "1234567890"
+                    role: "Admin"
+                    workingHours: "Full time"
+                    createdAt: "24 May 2025 - 10:30 AM"
+                    updatedAt: "25 May 2025 - 02:00 PM"
+                  - managerId: "j.smith4321"
+                    firstName: "Jane"
+                    lastName: "Smith"
+                    accountEmail: "jane.smith@example.com"
+                    status: "Restricted"
+                    phoneNumber: "0987654321"
+                    role: "Waiter"
+                    workingHours: "Morning shift"
+                    createdAt: "20 May 2025 - 09:00 AM"
+                    updatedAt: null
+        "401":
+          description: Unauthorized - token expired or access denied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Invalid token
+                  closeSession:
+                    type: boolean
+                    example: true
+        "403":
+          description: Waiter cannot access to this API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Access Denied. You are not allowed to do this process
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                errMsg: Internal Server Error
+  

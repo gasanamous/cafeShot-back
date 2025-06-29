@@ -1,0 +1,456 @@
+security:
+  - bearerAuth: []
+
+paths:
+  /order/new:
+    post:
+      tags:
+        - Order
+      summary: Create a new order
+      description: |
+        Allows a table to place a new order.
+        The tableId is taken from the JWT token, and pricing is calculated on the server side.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - orderItems
+              properties:
+                orderItems:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - item
+                      - quantity
+                    properties:
+                      itemId:
+                        type: string
+                        description: Menu item ID
+                      quantity:
+                        type: integer
+                        minimum: 1
+                      decorations:
+                        type: array
+                        items:
+                          type: string
+                      description:
+                        type: string
+      responses:
+        "201":
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Your order has been successfully received. Please allow a short time. Thank you for your patience
+                  orderDetails:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            itemName:
+                              type: string
+                            quantity:
+                              type: integer
+                            decorations:
+                              type: array
+                              items:
+                                type: string
+                            description:
+                              type: string
+                              nullable: true
+                            costPerUnit:
+                              type: number
+                            price:
+                              type: number
+                      totalPrice:
+                        type: number
+                      status:
+                        type: string
+        "400":
+          description: Missing or invalid order items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Please provide a list of order items to make your order
+        "401":
+          description: Unauthorized - token expired or no session between customer and table
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Please book the table to be able to make your order. Use the QR code or key
+                  closeSession:
+                    type: boolean
+                    example: true
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Please enter a correct data
+                  errorFields:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        itemId:
+                          type: string
+                        errors:
+                          type: object
+                          properties:
+                            itemId:
+                              type: string
+                              example: Please provide a valid ID
+                            quantity:
+                              type: string
+                              example: Quantity must be greater than 0
+
+  /order/edit/{orderId}:
+    patch:
+      tags:
+        - Order
+      summary: Cancel or edit an existing order
+      description: |
+        Allows a table to edit an order if it's still in 'Pending' state.
+        If the order is 'Cancelled' or already being prepared, the operation is forbidden.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the order to cancel/edit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - orderItems
+              properties:
+                orderItems:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - item
+                      - quantity
+                    properties:
+                      item:
+                        type: string
+                      quantity:
+                        type: integer
+                        minimum: 1
+                      decorations:
+                        type: array
+                        items:
+                          type: string
+                      description:
+                        type: string
+      responses:
+        "200":
+          description: Order updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Your order has been successfully Edited. Please allow a short time. Thank you for your patience
+                  orderDetails:
+                    type: object
+                    properties:
+                      orderItems:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            itemName:
+                              type: string
+                            quantity:
+                              type: integer
+                            decorations:
+                              type: array
+                              items:
+                                type: string
+                            description:
+                              type: string
+                              nullable: true
+                            costPerUnit:
+                              type: number
+                            price:
+                              type: number
+                      totalPrice:
+                        type: number
+          
+        "400":
+          description: Bad request - Order already cancelled, Order is in prepraing, it cannot be edited
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Sorry! Order is in prepraing, it cannot be edited
+        "401":
+          description: Unauthorized - token expired or no session between customer and table
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Please book the table to be able to make your order. Use the QR code or key
+                  closeSession: 
+                    type: boolean
+                    example: true
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Order not found
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Please enter a correct data
+                  errorFields:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        item:
+                          type: string
+                        errors:
+                          type: object
+                          properties:
+                            item:
+                              type: string
+                              example: Please provide a valid ID
+                            quantity:
+                              type: string
+                              example: Item cannot be ordered with quantity of 0
+              example:
+                errMsg: Please enter a correct data
+                errorFields:
+                  - itemId: 6820796ab67dfd0362f35df
+                    errors:
+                      itemId: Please provide a valid ID
+                      quantity: Item cannot be ordered with quantity of 0
+                  - itemId: 6820796ab67dfd0362f35df3
+                    errors:
+                      quantity: Item cannot be ordered with quantity of 0
+
+  /order/cancel/{orderId}:
+    delete:
+      tags:
+        - Order
+      summary: Cancel an existing order
+      description: |
+        Allows a table to cancel their order if it is still in the 'Pending' state.
+        If the order is already 'Cancelled' or is being prepared, the operation is forbidden.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the order to cancel
+      responses:
+        "200":
+          description: Order cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Your order has been successfully cancelled
+                  orderDetails:
+                    type: object
+                    properties:
+                      orders:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            itemName:
+                              type: string
+                            quantity:
+                              type: integer
+                            decorations:
+                              type: array
+                              items:
+                                type: string
+                            description:
+                              type: string
+                              nullable: true
+                            costPerUnit:
+                              type: number
+                            price:
+                              type: number
+                      totalPrice:
+                        type: number
+        "400":
+          description: Bad request - Order already cancelled, Order is in prepraing, it cannot be edited
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Sorry! Order is in prepraing, it cannot be edited
+        "401":
+          description: Unauthorized - token expired or no session between customer and table
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Please book the table to be able to make your order. Use the QR code or key
+                  closeSession: 
+                    type: boolean
+                    example: true
+        "403":
+          description: Forbidden – order is already cancelled or in preparing state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Sorry! Order is in prepraing, it cannot be cancelled
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Order not found
+        "422":
+          description: Invalid order ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Invalid order ID
+
+  /order/status/{orderId}:
+    patch:
+      tags:
+        - Order
+      summary: Edit order status
+      description: Updates the status of an existing order by its ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: The ID of the order to update
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              newOrderStatus: "shipped"
+      responses:
+        '200':
+          description: Order status updated successfully
+          content:
+            application/json:
+              example:
+                message: Order status changed to 
+        "401":
+          description: Unauthorized - token expired or access denied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Invalid token
+                  closeSession:
+                    type: boolean
+                    example: true
+        '400':
+          description: Bad Request - Invalid input or duplicate status
+          content:
+            application/json:
+              example:
+                errMsg: Please provide a new status of the order to complete the process
+        '404':
+          description: Not Found - Order does not exist
+          content:
+            application/json:
+              example:
+                errMsg: Order not found, please provide a valid order ID
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                errMsg: An unexpected error occurred
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

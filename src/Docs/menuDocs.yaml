@@ -1,0 +1,422 @@
+paths:
+  /menu:
+    get:
+      summary: Get menu items
+      description: |
+        Retrieves all menu items. Can accept query parameters to filter results.
+        If no parameters are provided, returns the entire menu.
+      tags:
+        - Menu
+      parameters:
+        - in: query
+          name: itemName
+          schema:
+            type: string
+          description: Filter by item name (trimmed)
+
+        - in: query
+          name: description
+          schema:
+            type: string
+          description: Filter by item description
+
+        - in: query
+          name: possibleDecorations
+          schema:
+            type: array
+            items:
+              type: string
+          description: Filter by possible decorations
+
+        - in: query
+          name: itemImage
+          schema:
+            type: string
+          description: Filter by item image path or filename
+
+        - in: query
+          name: series
+          schema:
+            type: string
+            enum: [Drink, Other, Food, Dessert]
+          description: Filter by series name (e.g., Drink, Food)
+
+        - in: query
+          name: category
+          schema:
+            type: string
+            enum:
+              - Hot drink
+              - Iced drink
+              - Food
+              - Western dessert
+              - Eastern dessert
+          description: Filter by category (e.g., Hot drink, Western dessert)
+
+        - in: query
+          name: costPerUnit
+          schema:
+            type: number
+            minimum: 0
+          description: Filter by cost per unit (must be a non-negative number)
+
+      responses:
+        "200":
+          description: Successful menu fetch
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Here is the menu
+                  menu:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        itemName:
+                          type: string
+                          example: espresso
+                        description:
+                          type: string
+                          example: Strong black coffee
+                        possibleDecorations:
+                          type: array
+                          items:
+                            type: string
+                          example: ["mint", "chocolate"]
+                        itemImage:
+                          type: string
+                          example: coffee.png
+                        series:
+                          type: string
+                          example: Drink
+                        category:
+                          type: string
+                          example: Hot drink
+                        costPerUnit:
+                          type: number
+                          example: 10
+                        howManyOrdered:
+                          type: number
+                          example: 23
+
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errorMsg:
+                    type: string
+                    example: Internal server error
+  
+  /menu/new:
+    post:
+      tags:
+        - Menu
+      summary: Add a new menu item
+      description: |
+        Allows authenticated managers to add a new menu item to the database.
+        The image file is stored on disk, and the metadata is saved in MongoDB.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - itemName
+                - itemImage
+                - series
+                - category
+              properties:
+                itemName:
+                  type: string
+                  description: The name of the menu item
+                  example: Turkish Coffee
+                description:
+                  type: string
+                  description: Optional item description
+                  example: Strong and traditional Middle Eastern coffee
+                possibleDecorations:
+                  type: array
+                  items:
+                    type: string
+                  description: Optional list of possible decorations for the item
+                  example: [ "Mint leaf", "Sugar cubes" ]
+                itemImage:
+                  type: string
+                  format: binary
+                  description: Image file for the item (PNG)
+                series:
+                  type: string
+                  enum: [Drink, Food, Dessert, Other]
+                  description: The broad series this item belongs to
+                  example: Drink
+                category:
+                  type: string
+                  enum: [Hot drink, Iced drink, Food, Western dessert, Eastern dessert]
+                  description: More specific category within the series
+                  example: Hot drink
+                costPerUnit:
+                  type: number
+                  format: float
+                  minimum: 0
+                  description: Optional cost per unit of the item
+                  example: 12.5
+      responses:
+        '201':
+          description: Item added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Item added to menu successfully
+        '400':
+          description: Validation error or bad input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Invalid input format
+        '401':
+          description: Unauthorized - Manager token is invalid or not provided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Access Denied. You are not allowed to do this process
+        "403":
+          description: Waiter cannot access to this API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Access Denied. You are not allowed to do this process
+        '500':
+          description: Internal server error or file write failure
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Internal server error occurred
+  
+  /menu/update/{itemId}:
+    patch:
+      tags:
+        - Menu
+      summary: Update an existing menu item
+      description: >
+        Allows authenticated managers to update menu item details including
+        the item image file, item name, description, decorations, series, category, and cost.
+        If updating the image or itemName, the file on disk will be replaced or renamed accordingly.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          description: The ID of the menu item to update
+          schema:
+            type: string
+            example: 60f7a2b5e4b0f1a7d2e4c1a9
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                itemName:
+                  type: string
+                  description: The name of the menu item
+                  example: Turkish Coffee
+                description:
+                  type: string
+                  description: Optional item description
+                  example: Strong and traditional Middle Eastern coffee
+                possibleDecorations:
+                  type: array
+                  items:
+                    type: string
+                  description: Optional list of possible decorations for the item
+                  example: ["Mint leaf", "Sugar cubes"]
+                itemImage:
+                  type: string
+                  format: binary
+                  description: Image file for the item (PNG)
+                series:
+                  type: string
+                  enum: [Drink, Food, Dessert, Other]
+                  description: The broad series this item belongs to
+                  example: Drink
+                category:
+                  type: string
+                  enum: [Hot drink, Iced drink, Food, Western dessert, Eastern dessert]
+                  description: More specific category within the series
+                  example: Hot drink
+                costPerUnit:
+                  type: number
+                  format: float
+                  minimum: 0
+                  description: Optional cost per unit of the item
+                  example: 12.5
+      responses:
+        '200':
+          description: Item updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messsage:
+                    type: string
+                    example: Item updated successfully
+        '400':
+          description: Bad request - missing or invalid parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Please provide menu item ID to update
+        '401':
+          description: Unauthorized - manager token invalid or missing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Access Denied. You are not allowed to do this process
+        "403":
+          description: Waiter cannot access to this API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Access Denied. You are not allowed to do this process
+        '404':
+          description: Not found - menu item with given ID does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: No menu item found with this ID
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Internal server error occurred
+
+  /menu/delete/{itemId}:
+    delete:
+      summary: Delete a menu item by its ID
+      description: Deletes a single menu item identified by its ID.
+      tags:
+        - Menu
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: itemId
+          required: true
+          description: The ID of the menu item to delete
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful deletion
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Item deleted successfully
+        "400":
+          description: Invalid ID format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Please provide a valid menu item ID
+        "401":
+          description: Unauthorized - Manager token is invalid or not provided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Access Denied. You are not allowed to do this process
+        "403":
+          description: Waiter cannot access to this API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Access Denied. You are not allowed to do this process
+        "404":
+          description: Menu item not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No menu item found with this ID
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Internal server error

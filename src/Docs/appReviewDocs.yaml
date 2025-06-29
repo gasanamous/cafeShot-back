@@ -1,0 +1,103 @@
+paths:
+  /review/new:
+    post:
+      summary: Submit a new app review
+      description: Allows users to submit a new review with a rating and an optional comment for the app.
+      operationId: submitAppReview
+      tags:
+        - App Review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rating
+              properties:
+                rating:
+                  type: number
+                  format: float
+                  minimum: 0
+                  maximum: 5
+                  description: Rating given by the user (from 0 to 5)
+                comment:
+                  type: string
+                  description: Optional comment from the user
+
+      responses:
+        "201":
+          description: Review submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Thank you for rating us
+        "400":
+          description: Bad request due to invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: "Please provide a rating between 0 and 5"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Internal server error.
+  /review/:
+    get:
+      tags:
+        - App Review
+      summary: Get top app reviews
+      description: >
+        Retrieves app reviews with a rating of 5 or more and a non-empty comment.
+        Returns an array of reviews without MongoDB internal fields.
+      responses:
+        '200':
+          description: Successful response with top reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  topReviews:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        rating:
+                          type: number
+                          description: User rating for the app (0 to 5)
+                          example: 5
+                        comment:
+                          type: string
+                          nullable: true
+                          description: User comment about the app
+                          example: Great app, very helpful!
+                        ratedAt:
+                          type: string
+                          format: date-time
+                          description: Date and time when the review was made (formatted)
+                          example: 25 May 2025 - 4:30 PM
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errMsg:
+                    type: string
+                    example: Internal server error occurred
