@@ -22,7 +22,7 @@ const createServer = () => {
     /** Setup basic middlewares */
     app.use(json())
     app.use(urlencoded({ limit: '10mb' }))
-    app.use(cors({ credentials: true, origin: 'http://localhost:5173' }))
+    app.use(cors({ credentials: true, origin: 'https://cafeshot-back.onrender.com/' }))
     app.use(cookieParser())
     app.use('/utils', express.static('src/utils'))
     app.use('/docs', swaggerUI.serve, swaggerUI.setup(mainDocs))
