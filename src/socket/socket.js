@@ -11,7 +11,7 @@ const initIO = (server) => {
 
     io = new Server(server, {
         cors: {
-            origin: 'http://localhost:5173',
+            origin: 'https://cafeshot.onrender.com',
             methods: ['POST', 'GET', 'DELETE', 'PATCH']
         }
     })
