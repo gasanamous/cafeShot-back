@@ -143,7 +143,7 @@ const updateMenuItemsController = async (req, res) => {
             if (key === '_id' || key == 'itemImage') {
                 continue
             }
-            if (key == "possibleDecorations){
+            if (key == "possibleDecorations"){
                 menuItem[key] = newItemData[key].map(deco => deco.trim())
                 continue
             }
