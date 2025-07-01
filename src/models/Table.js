@@ -26,6 +26,10 @@ const tableSchema = new Schema({
             message: "Please type a valid floor number for the new table"
         }
     },
+    tableQR: {
+        type: String,
+        default: null
+    },
     addedAt: {
         type: Date,
         default: () => Date.now(),

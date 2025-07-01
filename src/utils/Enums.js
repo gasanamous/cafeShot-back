@@ -9,7 +9,6 @@ const ORDER_STATUS = Object.freeze({
     PREPARING: "Preparing",
     SERVED: "Served",
     PAID: "Paid"
-
 })
 
 const MANAGER_STATUS = Object.freeze({
