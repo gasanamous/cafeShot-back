@@ -135,11 +135,17 @@ const updateMenuItemsController = async (req, res) => {
             menuItem.itemImage = newFileName
         }
 
+        if (newItemData._id){
+            delete newItemData._id
+        }
+        if (newItemData.itemImage){
+            delete newItemData.itemImage
+        }
+        await menuItem.updateOne({ $set: { ...newItemData } })
 
         /** update other item data */
-        for (let key in newItemData) {
+        /*for (let key in newItemData) {
 
-            /** Skip _id to avoiding cast error */
             if (key === '_id' || key == 'itemImage') {
                 continue
             }
@@ -148,7 +154,7 @@ const updateMenuItemsController = async (req, res) => {
                 continue
             }
             menuItem[key] = newItemData[key]
-        }
+        }*/
 
         await menuItem.save()
         return res.status(StatusCodes.OK).send({
