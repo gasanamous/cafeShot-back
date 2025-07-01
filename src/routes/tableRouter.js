@@ -22,4 +22,6 @@ tableRouter.get('/bill', SessionController.authCustomerToken, tableControllers.g
 /** Fetch all tables with its orders */
 tableRouter.get('/tablesDetails', SessionController.authManagerToken, tableControllers.fetchTablesWithOrdersController)
 
+/** Fetch all tables */
+tableRouter.get('/all', SessionController.authManagerToken, tableControllers.getAllTablesController)
 export { tableRouter }

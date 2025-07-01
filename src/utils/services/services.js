@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 // this function recive a word and return it with first letter capitalized ( ghassan => Ghassan )
 const capitalizeFirstLetter = (str) => {
     str = str.toLowerCase()
@@ -13,5 +16,19 @@ const formatVariabelNameToLabel = (key) => {
     return key.charAt(0).toUpperCase() + key.slice(1);
 }
 
-export { capitalizeFirstLetter }
-export { formatVariabelNameToLabel }
+
+const listFiles = async (req) => {
+
+    const dirPath = path.join(__dirname)
+    fs.readdir(dirPath, (err, files) => {
+        if (err)
+            return err
+        return { files }
+    })
+}
+
+export {
+    capitalizeFirstLetter,
+    formatVariabelNameToLabel,
+    listFiles
+}

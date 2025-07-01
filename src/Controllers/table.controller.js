@@ -298,10 +298,20 @@ const fetchTablesWithOrdersController = async (req, res) => {
     }
 }
 
+const getAllTablesController = async (req, res) => {
+    try {
+        const tables = await TableModel.find({})
+        return res.status(StatusCodes.OK).send({ tables })
+    } catch (error) {
+        const { statusCode, errorDetails } = ErrorHandler.handle(error)
+        return res.status(statusCode).send(errorDetails)
+    }
+}
 export {
     newTableController,
     bookTableController,
     cleanTableController,
     getTableBillController,
-    fetchTablesWithOrdersController
+    fetchTablesWithOrdersController,
+    getAllTablesController
 }

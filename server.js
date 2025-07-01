@@ -13,6 +13,7 @@ import mainDocs from './src/config/swagger.js'
 import http from 'http'
 import { initIO } from './src/socket/socket.js'
 import { StatusCodes } from 'http-status-codes'
+import { listFiles } from './src/utils/services/services.js'
 
 let io
 const createServer = () => {
@@ -26,6 +27,9 @@ const createServer = () => {
     app.use(cookieParser())
     app.use('/utils', express.static('src/utils'))
     app.use('/docs', swaggerUI.serve, swaggerUI.setup(mainDocs))
+    app.use('/list-files', async(req, res) => {
+        return res.send(listFiles(req))
+    } )
     app.use((err, req, res, next) => {
         console.log(err.message)
         res.status(StatusCodes.BAD_REQUEST).json(err.message)
